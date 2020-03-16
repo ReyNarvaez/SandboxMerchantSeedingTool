@@ -4,3 +4,4 @@ idna==2.6
 pycryptodome==3.6.6
 requests==2.20.0
 urllib3==1.22
+simplejson==3.17.0
