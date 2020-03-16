@@ -181,39 +181,4 @@ for i in range(0, NUM_ORDERS):
         sys.exit()
 
     print_progress(i)
-
-# orderIds = ["H7A14PDB9QJWW","2M52VJ5P7Q4VP","VE5RYXC5V54Y6","7DSNC6XGQ7Y86","JE18B7EHBQJ8W","CERDA1ATCXRCJ","HKEBD6SBYS9F8","86F0P1AX4TAQ2","GD1TENN469AW0","0VXMDC24F01M4","97WA62M2DG67T","9Z3TS0WNW70KT","KSJ94XRS41S80","N8HB8WN3XHZTC","5XAFGYG1H2KET","K9WXFEMX4VESE","NFAK5BHAA8RF4","QQ4MQE6XMK4QG","PDF80BCPVKE0Y","Z9MYKXYQW7GB6","JSWC44TWNCYBT","WP2PZ6YAY3ZQE","HE7NDTDCCJ4MY","BYH5T3P1FV0JE","TQ8Q76X3KWV4J","3DSBR599R3DWA","C2JMDX1Y079HE","EP4JDYENBR6GJ","9ZAM0F6VHFRB8","E7VGAKD7H70ZW","GN8FN224SDH5T","KXDVGWHN48J9C","YMHZQQ5HMKR50","5T1WQW8Q9Z4Y2","4RZQDSF4DN65T","ECH9M5H38H2M0","253BYZCS8BCJ6","3F53TX8AJT8CC","ZFKF33X40Y4DJ","ZMZF5Y71GJDQT","NWG8K6KZB53FG","JKQAMWEJNMWQP","8SZSAMPV9PF2Y","QNX8JQC7SXSH0","3WYKKSSH7FRS8","K3NR9CW517ZNT","9CTH6Q5F90J9Y","M8W0JPJZ3AHGC","6HPTDQ2D96M50","0KV41KC3Q4X40","FQJA0WQ9KAD7C","RNGV8XBFW5JSY"]
-# url = "https://sandbox.dev.clover.com/v3/merchants/merchantid/orders/orderid"
-
-# for i in range(0, len(orderIds)):
-#     url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderIds[i]
-#     headers = {"Authorization": "Bearer " + API_TOKEN}
-#     response = requests.delete(url, headers = headers)
-#     if (response.status_code != 200):
-#         print("Something went wrong deleting an order")
-#         sys.exit()
-
-# print(json.loads(json.dumps(customers[1])))
-
-# orderIds = ["V87CPS5M31JR8","NJW8412WBMXEY","H7A14PDB9QJWW","2M52VJ5P7Q4VP","VE5RYXC5V54Y6","7DSNC6XGQ7Y86","JE18B7EHBQJ8W","CERDA1ATCXRCJ","HKEBD6SBYS9F8","86F0P1AX4TAQ2","GD1TENN469AW0","0VXMDC24F01M4","97WA62M2DG67T","9Z3TS0WNW70KT","KSJ94XRS41S80","N8HB8WN3XHZTC","5XAFGYG1H2KET","K9WXFEMX4VESE","NFAK5BHAA8RF4","QQ4MQE6XMK4QG","PDF80BCPVKE0Y","Z9MYKXYQW7GB6","JSWC44TWNCYBT","WP2PZ6YAY3ZQE","HE7NDTDCCJ4MY","BYH5T3P1FV0JE","TQ8Q76X3KWV4J","3DSBR599R3DWA","C2JMDX1Y079HE","EP4JDYENBR6GJ","9ZAM0F6VHFRB8","E7VGAKD7H70ZW","GN8FN224SDH5T","KXDVGWHN48J9C","YMHZQQ5HMKR50","5T1WQW8Q9Z4Y2","4RZQDSF4DN65T","ECH9M5H38H2M0","253BYZCS8BCJ6","3F53TX8AJT8CC","ZFKF33X40Y4DJ","ZMZF5Y71GJDQT","NWG8K6KZB53FG","JKQAMWEJNMWQP","8SZSAMPV9PF2Y","QNX8JQC7SXSH0","3WYKKSSH7FRS8","K3NR9CW517ZNT","9CTH6Q5F90J9Y","M8W0JPJZ3AHGC","6HPTDQ2D96M50","0KV41KC3Q4X40","FQJA0WQ9KAD7C","RNGV8XBFW5JSY"]
-# for i in range (0, len(orderIds)):
-#     sleep(0.1)
-#     rand_customer_index = randint(0, num_customers - 1)
-#     orderId = orderIds[i]
-#     url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId
-#     print("Appending customer to order " + url)
-#     payload = {
-#         "customers": {
-#             "elements": [
-#                 customers[rand_customer_index],
-#             ]
-#         },
-#     }
-
-#     response = requests.post(url, headers=headers, json=payload)
-#     if (response.status_code != 200):
-#         print("Something went wrong adding a cutomer to the order")
-#         print(response)
-#         sys.exit()
-
-# ADD EXPAND CUSOTMERS TO ORDERS REQUESTS (https://community.clover.com/questions/840/add-a-customer-to-an-order-through-the-rest-api.html)
+    
