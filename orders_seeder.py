@@ -4,7 +4,7 @@
 
 MID = ""
 API_TOKEN = ""
-NUM_ORDERS = 50
+NUM_ORDERS = 25
 ENVIRONMENT = "https://sandbox.dev.clover.com/" # or https://api.clover.com/ or https://eu.clover.com/
 
 #######################################
@@ -30,11 +30,12 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from base64 import b64encode
 
+headers = {"Authorization": "Bearer " + API_TOKEN}
+
 # Fetch all items from a merchant
 print("Fetching all items from merchant")
 itemIds = []
 url = ENVIRONMENT + "v3/merchants/" + MID + "/items"
-headers = {"Authorization": "Bearer " + API_TOKEN}
 response = requests.get(url, headers=headers)
 if (response.status_code != 200):
     print("Something went wrong fetching this merchant's items")
@@ -53,7 +54,6 @@ if (num_items == 0):
 # Fetch all customers from a merchant
 print("Fetching all customers from merchant")
 url = ENVIRONMENT + "v3/merchants/" + MID + "/customers?expand=emailAddresses%2CphoneNumbers%2Cmetadata"
-headers = {"Authorization": "Bearer " + API_TOKEN}
 response = requests.get(url, headers=headers)
 if (response.status_code != 200):
     print("Something went wrong fetching this merchant's customers")
@@ -69,7 +69,6 @@ if (num_customers == 0):
 # Fetch developer pay secrets from GET /v2/merchant/{mId}/pay/key
 print("Fetching developer pay secret")
 url = ENVIRONMENT + "v2/merchant/" + MID + "/pay/key"
-headers = {"Authorization": "Bearer " + API_TOKEN}
 response = requests.get(url, headers = headers)
 if response.status_code != 200:
     print("Something went wrong fetching Developer Pay API secrets")
@@ -136,44 +135,60 @@ for i in range(0, NUM_ORDERS):
         print("Something went wrong adding a line item to the order")
         sys.exit()
 
-    price = response.json()["price"]
+    price = int(response.json()["price"])
+    tipAmount = 0
+    if(randint(0, 1) == 1):
+        tipAmount = ((price / 100) / (100 / randint(15, 30)) * 100)
 
-    ########## BEGIN PAYMENT ##########
-    # create a cipher from the RSA key and use it to encrypt the card number, prepended with the prefix from GET /v2/merchant/{mId}/pay/key
-    cipher = PKCS1_OAEP.new(RSAkey)
-    # encode str to byte (https://eli.thegreenplace.net/2012/01/30/the-bytesstr-dichotomy-in-python-3)
-    encrypted = cipher.encrypt((prefix + cardNumber).encode())
+    numPayments = randint(1, 2)
 
-    # Base64 encode the resulting encrypted data into a string to use as the cardEncrypted' property.
-    cardEncrypted = b64encode(encrypted)
+    for j in range(0, numPayments):
 
-    post_data = {
-        "orderId": orderId,
-        "currency": "usd",
-        "amount": int(price),
-        "expMonth": expMonth,
-        "cvv": CVV,
-        "expYear": expYear,
-        "cardEncrypted": cardEncrypted,
-        "last4": cardNumber[-4:],
-        "first6": cardNumber[0:6]
-    }
+        ########## BEGIN PAYMENT ##########
+        # create a cipher from the RSA key and use it to encrypt the card number, prepended with the prefix from GET /v2/merchant/{mId}/pay/key
+        cipher = PKCS1_OAEP.new(RSAkey)
+        # encode str to byte (https://eli.thegreenplace.net/2012/01/30/the-bytesstr-dichotomy-in-python-3)
+        encrypted = cipher.encrypt((prefix + cardNumber).encode())
+
+        # Base64 encode the resulting encrypted data into a string to use as the cardEncrypted' property.
+        cardEncrypted = b64encode(encrypted)
+
+        amount = price / numPayments
+
+        if(j == 0):
+            amount = amount + tipAmount
+        else:
+            tipAmount = 0
+
+        post_data = {
+            "orderId": orderId,
+            "currency": "usd",
+            "amount": amount,
+            "expMonth": expMonth,
+            "cvv": CVV,
+            "expYear": expYear,
+            "cardEncrypted": cardEncrypted,
+            "last4": cardNumber[-4:],
+            "first6": cardNumber[0:6],
+            "tipAmount": tipAmount
+        }
+        
+        sleep(0.1)
+        print("'Paying' order")
+
+        posturl = ENVIRONMENT + "v2/merchant/" + MID + "/pay"
+        response = requests.post(
+            posturl,
+            headers = headers,
+            data= post_data
+            )
+        if response.status_code != 200:
+            print("Something went wrong during developer pay")
+            sys.exit()
     
-    sleep(0.1)
-    print("'Paying' order")
-
-    posturl = ENVIRONMENT + "v2/merchant/" + MID + "/pay"
-    response = requests.post(
-        posturl,
-        headers = headers,
-        data= post_data
-        )
-    if response.status_code != 200:
-        print("Something went wrong during developer pay")
-        sys.exit()
-
     url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId
-    payload = {"total": int(price)}
+    payload = {"total": price, "paymentState":"PAID"}
+    
     sleep(0.1)
     response = requests.post(url=url, headers=headers, json=payload)
     if response.status_code != 200:
@@ -181,4 +196,5 @@ for i in range(0, NUM_ORDERS):
         sys.exit()
 
     print_progress(i)
-    
+
+
