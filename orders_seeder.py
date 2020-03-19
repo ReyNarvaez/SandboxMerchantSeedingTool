@@ -4,7 +4,7 @@
 
 MID = ""
 API_TOKEN = ""
-NUM_ORDERS = 25
+NUM_ORDERS = 5
 ENVIRONMENT = "https://sandbox.dev.clover.com/" # or https://api.clover.com/ or https://eu.clover.com/
 
 #######################################
@@ -155,9 +155,7 @@ for i in range(0, NUM_ORDERS):
 
         amount = price / numPayments
 
-        if(j == 0):
-            amount = amount + tipAmount
-        else:
+        if(j != 0):
             tipAmount = 0
 
         post_data = {
