@@ -4,7 +4,7 @@
 
 MID = ""
 API_TOKEN = ""
-NUM_ORDERS = 5
+NUM_ORDERS = 25
 ENVIRONMENT = "https://sandbox.dev.clover.com/" # or https://api.clover.com/ or https://eu.clover.com/
 
 #######################################
