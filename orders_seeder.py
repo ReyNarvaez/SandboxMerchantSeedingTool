@@ -4,7 +4,7 @@
 
 MID = ""
 API_TOKEN = ""
-NUM_ORDERS = 25
+NUM_ORDERS = 10
 ENVIRONMENT = "https://sandbox.dev.clover.com/" # or https://api.clover.com/ or https://eu.clover.com/
 
 #######################################
@@ -66,6 +66,21 @@ if (num_customers == 0):
     print("This merchant has no customers. Create customers and then re-run this script.")
     sys.exit()
 
+# Fetch all modifiers from a merchant
+print("Fetching all modifiers from merchant")
+url = ENVIRONMENT + "v3/merchants/" + MID + "/modifiers"
+response = requests.get(url, headers=headers)
+if (response.status_code != 200):
+    print("Something went wrong fetching this merchant's modifiers")
+    sys.exit()
+
+modifiers = json.loads(response.content)["elements"]
+
+num_modifiers = len(modifiers)
+if (num_modifiers == 0):
+    print("This merchant has no modifiers. Create modifiers and then re-run this script.")
+    sys.exit()
+
 # Fetch developer pay secrets from GET /v2/merchant/{mId}/pay/key
 print("Fetching developer pay secret")
 url = ENVIRONMENT + "v2/merchant/" + MID + "/pay/key"
@@ -100,9 +115,10 @@ for i in range(0, NUM_ORDERS):
         print("Something went wrong creating an order")
         sys.exit()
     orderId = response.json()["id"]
-    
+    print("Order created: " + orderId)
+
     sleep(0.1)
-    print("Assigning customer to order")
+    print("Adding customer")
 
     rand_customer_index = randint(0, num_customers - 1)
     url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId + "?expand=customers"
@@ -116,18 +132,19 @@ for i in range(0, NUM_ORDERS):
 
     response = requests.post(url, headers=headers, json=payload)
     if (response.status_code != 200):
-        print("Something went wrong assigning the customer to the order")
+        print("Something went wrong adding the customer to the order")
         print(response)
         sys.exit()
 
     sleep(0.1)
-    print("Assigning item to order")
+    print("Adding item")
 
     url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId + "/line_items"
 
     rand_item_index = randint(0, num_items - 1)
+    itemId = itemIds[rand_item_index]
     payload = { 
-        "item": { "id": itemIds[rand_item_index] },
+        "item": { "id": itemId }
         }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -136,11 +153,77 @@ for i in range(0, NUM_ORDERS):
         sys.exit()
 
     price = int(response.json()["price"])
+    item = response.json()
+    itemId = item["id"]
+    
+    if(randint(0, 1) == 1):
+        sleep(0.1)
+        print("Adding modifier to line item")
+
+        url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId + "/line_items/" + itemId + "/modifications"
+        rand_modifier_index = randint(0, num_modifiers - 1)
+        modifier = modifiers[rand_modifier_index]
+        payload = {
+            "modifier": modifier
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+        if (response.status_code != 200):
+            print(response)
+            print("Something went wrong adding a modifier to the line item")
+            sys.exit()
+        
+        price += int(modifier["price"])
+    
+    addDiscount = randint(0, 2)
+    shouldAddDiscount = False
+    if(addDiscount == 1):
+        # add discount to order
+        print("Adding discount")
+        shouldAddDiscount = True
+        url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId + "/discounts"
+    if(addDiscount == 2):
+        # add discount to line item
+        print("Adding discount to line item")
+        shouldAddDiscount = True
+        url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId + "/line_items/" + itemId + "/discounts"
+
+    if(shouldAddDiscount):
+        typeDiscount = randint(0, 1)
+        discount = randint(1, 5)
+        payload = {}
+        if(typeDiscount == 0):
+            # add amount discount
+            print("Adding amount discount $" + str(discount))
+            discount = discount * (-100)
+            payload["name"] = "amount discount of"
+            payload["amount"] = discount
+        else:
+            # add percentage discount
+            print("Adding percentage discount " + str(discount) + "%")
+            payload["name"] = "percentage discount of"
+            payload["percentage"] = discount
+
+        response = requests.post(url, headers=headers, json=payload)
+        if (response.status_code != 200):
+            print(response)
+            print("Something went wrong adding a discount to the order")
+            sys.exit()
+
+        if(typeDiscount == 0):
+            price += discount
+        if(addDiscount == 1 and typeDiscount == 1):
+            price = price - (price / (100 / discount))
+        if(addDiscount == 2 and typeDiscount == 1):
+            price = price - (int(item["price"]) / (100 / discount))
+
     tipAmount = 0
     if(randint(0, 1) == 1):
+        print("Adding tip")
         tipAmount = ((price / 100) / (100 / randint(15, 30)) * 100)
 
     numPayments = randint(1, 2)
+    amount = price / numPayments
 
     for j in range(0, numPayments):
 
@@ -152,8 +235,6 @@ for i in range(0, NUM_ORDERS):
 
         # Base64 encode the resulting encrypted data into a string to use as the cardEncrypted' property.
         cardEncrypted = b64encode(encrypted)
-
-        amount = price / numPayments
 
         if(j != 0):
             tipAmount = 0
@@ -194,5 +275,3 @@ for i in range(0, NUM_ORDERS):
         sys.exit()
 
     print_progress(i)
-
-
