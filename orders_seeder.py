@@ -145,12 +145,10 @@ for i in range(0, NUM_ORDERS):
     item = items[rand_item_index]
     
     taxRate = 0
-    taxAmount = 0
-    if(randint(0, 1) == 1):
-        print("Adding tax rate")
-        taxRates = item["taxRates"]["elements"]
-        for j in range(0, len(taxRates)):
-            taxRate += int(taxRates[j]["rate"]) / 100000
+    taxAmount = 0    
+    taxRates = item["taxRates"]["elements"]
+    for j in range(0, len(taxRates)):
+        taxRate += int(taxRates[j]["rate"]) / 100000
 
     itemId = item["id"]
     payload = { 
@@ -165,6 +163,7 @@ for i in range(0, NUM_ORDERS):
     price = int(response.json()["price"])
 
     if(taxRate > 0):
+        print("Adding tax rate")
         taxAmount = price / (100 / taxRate)
         price += taxAmount
 
