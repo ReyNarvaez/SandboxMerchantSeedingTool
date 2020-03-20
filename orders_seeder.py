@@ -4,7 +4,7 @@
 
 MID = ""
 API_TOKEN = ""
-NUM_ORDERS = 10
+NUM_ORDERS = 5
 ENVIRONMENT = "https://sandbox.dev.clover.com/" # or https://api.clover.com/ or https://eu.clover.com/
 
 #######################################
@@ -35,21 +35,22 @@ headers = {"Authorization": "Bearer " + API_TOKEN}
 # Fetch all items from a merchant
 print("Fetching all items from merchant")
 itemIds = []
-url = ENVIRONMENT + "v3/merchants/" + MID + "/items"
+url = ENVIRONMENT + "v3/merchants/" + MID + "/items?expand=taxRates"
 response = requests.get(url, headers=headers)
 if (response.status_code != 200):
     print("Something went wrong fetching this merchant's items")
     sys.exit()
 
-elements = json.loads(response.content)["elements"]
+items = json.loads(response.content)["elements"]
 
-for i in range(0, len(elements)):
-    itemIds.append(str(elements[i]["id"]))
+num_items = len(items)
 
-num_items = len(itemIds)
 if (num_items == 0):
     print("This merchant has no inventory. Create items and then re-run this script.")
     sys.exit()
+
+for i in range(0, num_items):
+    itemIds.append(str(items[i]["id"]))
 
 # Fetch all customers from a merchant
 print("Fetching all customers from merchant")
@@ -133,7 +134,6 @@ for i in range(0, NUM_ORDERS):
     response = requests.post(url, headers=headers, json=payload)
     if (response.status_code != 200):
         print("Something went wrong adding the customer to the order")
-        print(response)
         sys.exit()
 
     sleep(0.1)
@@ -142,7 +142,17 @@ for i in range(0, NUM_ORDERS):
     url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId + "/line_items"
 
     rand_item_index = randint(0, num_items - 1)
-    itemId = itemIds[rand_item_index]
+    item = items[rand_item_index]
+    
+    taxRate = 0
+    taxAmount = 0
+    if(randint(0, 1) == 1):
+        print("Adding tax rate")
+        taxRates = item["taxRates"]["elements"]
+        for j in range(0, len(taxRates)):
+            taxRate += int(taxRates[j]["rate"]) / 100000
+
+    itemId = item["id"]
     payload = { 
         "item": { "id": itemId }
         }
@@ -153,6 +163,11 @@ for i in range(0, NUM_ORDERS):
         sys.exit()
 
     price = int(response.json()["price"])
+
+    if(taxRate > 0):
+        taxAmount = price / (100 / taxRate)
+        price += taxAmount
+
     item = response.json()
     itemId = item["id"]
     
@@ -169,7 +184,6 @@ for i in range(0, NUM_ORDERS):
 
         response = requests.post(url, headers=headers, json=payload)
         if (response.status_code != 200):
-            print(response)
             print("Something went wrong adding a modifier to the line item")
             sys.exit()
         
@@ -206,7 +220,6 @@ for i in range(0, NUM_ORDERS):
 
         response = requests.post(url, headers=headers, json=payload)
         if (response.status_code != 200):
-            print(response)
             print("Something went wrong adding a discount to the order")
             sys.exit()
 
@@ -249,7 +262,8 @@ for i in range(0, NUM_ORDERS):
             "cardEncrypted": cardEncrypted,
             "last4": cardNumber[-4:],
             "first6": cardNumber[0:6],
-            "tipAmount": tipAmount
+            "tipAmount": tipAmount,
+            "taxAmount": taxAmount
         }
         
         sleep(0.1)
