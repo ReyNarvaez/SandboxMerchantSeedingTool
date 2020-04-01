@@ -101,6 +101,8 @@ RSAkey = RSA.construct((modulus, exponent))
 def print_progress(i):
     print((str((float(i + 1) / NUM_ORDERS) * 100)) + "% complete")
 
+result = "Created order: %s with total: $%s for customer: %s %s (%s) with %s payment of $%s, total: $%s, payment type: %s"
+
 for i in range(0, NUM_ORDERS):
     print("###########################")
     sleep(0.1)
@@ -122,11 +124,12 @@ for i in range(0, NUM_ORDERS):
     print("Adding customer")
 
     rand_customer_index = randint(0, num_customers - 1)
+    customer = customers[rand_customer_index]
     url = ENVIRONMENT + "v3/merchants/" + MID + "/orders/" + orderId + "?expand=customers"
     payload = {
         "customers": {
             "elements": [
-                customers[rand_customer_index],
+                customer,
             ]
         },
     }
@@ -235,7 +238,17 @@ for i in range(0, NUM_ORDERS):
         tipAmount = ((price / 100) / (100 / randint(15, 30)) * 100)
 
     numPayments = randint(1, 2)
-    amount = price / numPayments
+    amount = 0
+    paymentType = ""
+
+    if(randint(0, 1) == 0):
+        print("Full payment")
+        paymentType = "Full"
+        amount = price / numPayments
+    else:
+        print("Partial payment")
+        paymentType = "Partial"
+        amount = (price - randint(100, price)) / numPayments
 
     for j in range(0, numPayments):
 
@@ -286,5 +299,6 @@ for i in range(0, NUM_ORDERS):
     if response.status_code != 200:
         print("Something went wrong updating order total")
         sys.exit()
-
+    
+    print(result % (orderId, float(price) / 100, customer["firstName"], customer["lastName"], customer["id"], numPayments, float(amount) / 100, (float(amount) / 100) * numPayments, paymentType))
     print_progress(i)
